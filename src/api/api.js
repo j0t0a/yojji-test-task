@@ -10,6 +10,6 @@ export function getNeoByDate(date, onGet){
     .then(res=>res.json())
     .then((data) => {
         const dayInfo = getDayInfo(data.near_earth_objects[formattedDate])
-        onGet(dayInfo)
+        onGet({...dayInfo, date: formattedDate})
     })
 }
