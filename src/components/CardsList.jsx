@@ -1,26 +1,51 @@
-import { Col, Row } from 'antd';
-import { CardItem } from './CardItem';
 import { useEffect, useState } from 'react';
-import { dateFormats } from '../constants/date';
-import { getNeoByDate } from '../api/api';
+import { Col, Row } from 'antd';
 import moment from 'moment/moment';
+import { getNeoByDate } from '../api/api';
+import { CardItem } from './CardItem';
 
 export const CardsList = () => {
-    const [neoDays, setNeoDays] = useState([])
-    const [date, setDate] = useState(moment())
+    const [neoDays, setNeoDays] = useState([]);
+    const [date, setDate] = useState(moment().startOf('month'));
 
     useEffect(() => {
-        getNeoByDate(date, (neos) => setNeoDays((prev) => [...prev, {...neos}])) 
-    },[])
+
+        const interval = setInterval(() => {
+            getNeoByDate(date, (neos) => setNeoDays((prev) => {
+                let result = prev
+
+                if(prev.length === 6){
+                    result = result.slice(1, result.length)
+                }
+
+                return [...result, {...neos}]
+            })) 
+
+              
+            setDate(prev => {
+                if(prev.isSame(moment(), 'day')){
+                    prev.startOf('month')
+                }else{
+                    prev.add(1, 'day')
+                }
+            
+                return prev
+            })
+            
+        }, 1000);
+
+        return () => clearInterval(interval)
+
+    },[]);
+
 
     return (
-    <Row gutter={[16, 16]}>
-
-        {neoDays.map( (neo, index) => {
-            return <Col key={index} span={24}>
-                <CardItem></CardItem>
-            </Col>
-        })}
-        
-    </Row>)
+        <Row gutter={[16, 16]}>
+            {neoDays.map((day, index) => {
+                return <Col key={index}>
+                    <CardItem></CardItem>
+                </Col>
+            })}
+        </Row>
+    )
 };
