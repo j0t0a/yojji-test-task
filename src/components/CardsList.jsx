@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Col, Row } from 'antd';
 import moment from 'moment/moment';
 import { getNeoByDate } from '../api/api';
 import { CardItem } from './CardItem';
+import { useInterval } from '../hooks/useInterval';
+
+const REQUEST_DELAY = 5000
+const MAX_ITEMS_COUNT = 6
 
 export const CardsList = () => {
     const [neoDays, setNeoDays] = useState([]);
@@ -12,7 +16,7 @@ export const CardsList = () => {
         getNeoByDate(date, (neos) => setNeoDays((prev) => {
             let result = prev
 
-            if(prev.length === 6){
+            if(prev.length === MAX_ITEMS_COUNT){
                 result = result.slice(1, result.length)
             }
 
@@ -31,22 +35,21 @@ export const CardsList = () => {
         })
     }
 
-    useEffect(() => {
-        dataSet()
-        const interval = setInterval(() => {
-            dataSet()
-        }, 5000);
+    useInterval(dataSet, REQUEST_DELAY)
 
-        return () => clearInterval(interval)
+    function getIsHazardous(date){
+        const daysByHazardousNumber = [...neoDays].sort((prevDay, nextDay) => {
+            return nextDay.number_of_potentially_hazardous - prevDay.number_of_potentially_hazardous
+        }).slice(0, 2)
 
-    },[]);
-
+        return daysByHazardousNumber.find( day => day.date === date)
+    }
 
     return (
         <Row gutter={[16, 16]}>
             {neoDays.map((day, index) => {
                 return <Col key={index}>
-                    <CardItem day={day}></CardItem>
+                    <CardItem isHazardous={getIsHazardous(day.date)} day={day}></CardItem>
                 </Col>
             })}
         </Row>
